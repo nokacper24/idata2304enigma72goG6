@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-
+	"strings"
 )
 
 func main() {
@@ -24,11 +24,37 @@ func main() {
 		fmt.Println("Error reading UDP response")
 		return
 	}
+
 	fmt.Println(returnMessage)
+
+	hdwq, err := processRespone(returnMessage)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Error processing UDP response")
+		return
+	}
+
+	fmt.Println(hdwq)
+
+	conn.Write([]byte(hdwq))
+
+	secondResponse, err := readUDPResp(conn)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Error reading UDP response")
+		return
+	}
+
+	fmt.Println(secondResponse)
 
 	defer conn.Close()
 }
 
+/**
+ Creates a UDP connection to the server and sends the initial connection message
+
+ @return net.Conn - the connection to the server
+ */
 func sendUDPReq(url string, port string, message string) (net.Conn, error) {
 	// Send UDP request to server
 	conn, err := net.Dial("udp", url+":"+port)
@@ -51,4 +77,37 @@ func readUDPResp(conn net.Conn) (string, error) {
 		return "", err
 	}
 	return string(buf[:n]), nil
+}
+
+
+func processRespone(response string) (string, error) {
+	var responseString string
+// Process response from server
+// get the last character of the response
+punctuation := response[len(response)-1:]
+
+var quorsta string 
+if punctuation == "." {
+	quorsta = "statement"
+}
+if punctuation == "?" {
+	quorsta = "question"
+}
+
+//get the amount of words in the response
+words := strings.Fields(response)
+wordCount := len(words)
+
+//get the amount of characters in the response
+charCount := len(response)
+
+if charCount == 1 {
+	wordCount = 0
+}
+
+wordCountString := fmt.Sprintf("%d", wordCount)
+
+responseString = quorsta + " " + wordCountString
+
+return responseString, nil
 }
