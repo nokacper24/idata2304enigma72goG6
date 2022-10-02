@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -79,7 +78,6 @@ Reads the response from the server.
 func readUDPResp(conn net.Conn) (string, error) {
 	// Read response from server
 	buf := make([]byte, 1024)
-	time.Sleep(1 * time.Second)
 	n, err := conn.Read(buf)
 	if err != nil {
 		return "", err
