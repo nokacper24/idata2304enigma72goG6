@@ -50,11 +50,9 @@ func main() {
 	defer conn.Close()
 }
 
-/**
-Creates a UDP connection to the server and sends the initial connection message
-
-@return net.Conn - the connection to the server
-*/
+// Creates a UDP connection to the server and sends the initial connection message
+//
+// @return net.Conn - the connection to the server
 func sendUDPReq(url string, port string, message string) (net.Conn, error) {
 	// Send UDP request to server
 	conn, err := net.Dial("udp", url+":"+port)
@@ -68,13 +66,12 @@ func sendUDPReq(url string, port string, message string) (net.Conn, error) {
 	return conn, nil
 }
 
-/**
-Reads the response from the server.
 
-@param net.Conn - the connection to the server
-
-@return string - the response from the server
-*/
+// Reads the response from the server.
+// 
+// @param net.Conn - the connection to the server
+//
+// @return string - the response from the server
 func readUDPResp(conn net.Conn) (string, error) {
 	// Read response from server
 	buf := make([]byte, 1024)
@@ -85,11 +82,12 @@ func readUDPResp(conn net.Conn) (string, error) {
 	return string(buf[:n]), nil
 }
 
-/**
-Processes the response from the server and returns the correct response.
 
-@return string - the correct response to send back to the server
-*/
+// Processes the response from the server and returns the correct response.
+// Returned response is 'question '/'statement ' and number of words in the given sentence.
+//
+// @param string - the sentence in response from the server
+// @return string - the correct response to send back to the server
 func processRespone(response string) (string, error) {
 	var responseString string
 	// Process response from server
