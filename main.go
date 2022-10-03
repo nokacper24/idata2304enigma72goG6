@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
+	"time"
 )
 
 func main() {
@@ -12,42 +14,94 @@ func main() {
 	port := "1234"
 	message := "task"
 
+	numberOfWorkers := 1000
+
+	var wg sync.WaitGroup
+
+	var successfullConnections int
+	var failedConnections int
+
+	for i := 0; i <= numberOfWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			shouldReturn := performTask(url, port, message)
+			if !shouldReturn {
+				// if the task fails, print the error with red bg and return
+				fmt.Println("\033[41m" + "Error performing task" + "\033[0m")
+				failedConnections++
+				wg.Done()
+
+			}
+			if shouldReturn {
+				successfullConnections++
+				wg.Done()
+			}
+
+		}()
+
+	}
+	wg.Wait()
+	fmt.Println("Number of successful connections: ", successfullConnections)
+	fmt.Println("Number of failed connections: ", failedConnections)
+
+}
+
+func performTask(url string, port string, message string) bool {
+	// store the return messages so they can be printed at the end
+	var returnMessages []string
 	conn, err := sendUDPReq(url, port, message)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Error sending UDP request")
-		return
+		return false
 	}
-	returnMessage, err := readUDPResp(conn)
+	initialQuestion, err := readUDPResp(conn)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Error reading UDP response")
-		return
+		return false
 	}
 
-	fmt.Println(returnMessage)
+	// print a string of ---- to separate the initial question from the response
+	returnMessages = append(returnMessages, "--------------------------------------------------\n")
+	returnMessages = append(returnMessages, initialQuestion+"\n")
 
-	hdwq, err := processRespone(returnMessage)
+	questionAnswer, err := processRespone(initialQuestion)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Error processing UDP response")
-		return
+		return false
 	}
 
-	fmt.Println(hdwq)
+	returnMessages = append(returnMessages, questionAnswer+"\n")
 
-	conn.Write([]byte(hdwq))
+	conn.Write([]byte(questionAnswer))
 
-	secondResponse, err := readUDPResp(conn)
+	correctResponseAnswer, err := readUDPResp(conn)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Error reading UDP response")
-		return
+		return false
 	}
 
-	fmt.Println(secondResponse)
+	if correctResponseAnswer == "ok" {
+		//print the response from the server with green background
+		returnMessages = append(returnMessages, "\033[42m"+correctResponseAnswer+"\033[0m"+"\n")
+	} else {
+		//print the response from the server with red background
+		returnMessages = append(returnMessages, "\033[41m"+correctResponseAnswer+"\033[0m"+"\n")
+	}
+
+	// prepare the return messages to be printed in a chunk so they are not incorrectly ordered
+
+	largeString := ""
+	for _, message := range returnMessages {
+		largeString += message
+	}
+	fmt.Println(largeString)
 
 	defer conn.Close()
+	return true
 }
 
 // Creates a UDP connection to the server and sends the initial connection message
@@ -66,9 +120,8 @@ func sendUDPReq(url string, port string, message string) (net.Conn, error) {
 	return conn, nil
 }
 
-
 // Reads the response from the server.
-// 
+//
 // @param net.Conn - the connection to the server
 //
 // @return string - the response from the server
@@ -79,9 +132,10 @@ func readUDPResp(conn net.Conn) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// add a timeout to the connection
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	return string(buf[:n]), nil
 }
-
 
 // Processes the response from the server and returns the correct response.
 // Returned response is 'question '/'statement ' and number of words in the given sentence.
