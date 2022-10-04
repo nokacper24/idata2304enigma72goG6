@@ -141,6 +141,7 @@ func readUDPResp(conn net.Conn) (string, error) {
 // Returned response is 'question '/'statement ' and number of words in the given sentence.
 //
 // @param string - the sentence in response from the server
+//
 // @return string - the correct response to send back to the server
 func processRespone(response string) (string, error) {
 	var responseString string
