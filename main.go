@@ -127,13 +127,13 @@ func sendUDPReq(url string, port string, message string) (net.Conn, error) {
 // @return string - the response from the server
 func readUDPResp(conn net.Conn) (string, error) {
 	// Read response from server
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
 	if err != nil {
 		return "", err
 	}
 	// add a timeout to the connection
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	return string(buf[:n]), nil
 }
 
