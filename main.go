@@ -3,18 +3,45 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	// import env variables package
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// load env variables
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+		panic(err)
+	}
 
-	url := "129.241.152.12"
-	port := "1234"
-	message := "task"
+	// get the url and port from the env variables
+	url := os.Getenv("URL")
+	port := os.Getenv("PORT")
+	message := os.Getenv("MESSAGE")
 
-	numberOfWorkers := 1000
+
+	// get the number of tasks to perform from the env variables
+	tasks, err := strconv.Atoi(os.Getenv("TASKS"))
+	if err != nil {
+		fmt.Println("Error converting tasks to int")
+		panic(err)
+	}
+
+	//print env variables
+	fmt.Println("URL: " + url)
+	fmt.Println("PORT: " + port)
+	fmt.Println("MESSAGE: " + message)
+	fmt.Println("TASKS: " + strconv.Itoa(tasks))
+
+
+	numberOfWorkers := tasks
 
 	var wg sync.WaitGroup
 
