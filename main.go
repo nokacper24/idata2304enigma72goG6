@@ -46,6 +46,15 @@ func main() {
 
 }
 
+// performs the task of sending a UDP request to the server, reading the response and sending the correct response back to the server.
+//
+// @param string - the url of the server
+//
+// @param string - the port of the server
+//
+// @param string - the message to send to the server
+//
+// @return bool - true if the task was performed successfully, false if not
 func performTask(url string, port string, message string) bool {
 	// store the return messages so they can be printed at the end
 	var returnMessages []string
