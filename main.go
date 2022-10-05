@@ -11,13 +11,18 @@ import (
 
 	// import env variables package
 	"github.com/joho/godotenv"
+
+	//import a logging package
+	"socketProgrammingUDP/logger"
 )
+
+var log = logger.NewLogger()
 
 func main() {
 	// load env variables
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Error loading .env file")
+		log.Error("Error loading .env file")
 		panic(err)
 	}
 
@@ -30,7 +35,7 @@ func main() {
 	// get the number of tasks to perform from the env variables
 	tasks, err := strconv.Atoi(os.Getenv("TASKS"))
 	if err != nil {
-		fmt.Println("Error converting tasks to int")
+		log.Error("Error converting TASKS to int")
 		panic(err)
 	}
 
@@ -92,14 +97,14 @@ func performTask(url string, port string, message string) bool {
 	var returnMessages []string
 	conn, err := sendUDPReq(url, port, message)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Error sending UDP request")
+		log.Error("Error sending UDP request")
+		log.Error(err)
 		return false
 	}
 	initialQuestion, err := readUDPResp(conn)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Error reading UDP response")
+		log.Error("Error reading UDP response")
+		log.Error(err)
 		return false
 	}
 
@@ -107,10 +112,12 @@ func performTask(url string, port string, message string) bool {
 	returnMessages = append(returnMessages, "--------------------------------------------------\n")
 	returnMessages = append(returnMessages, initialQuestion+"\n")
 
+	
+
 	questionAnswer, err := processRespone(initialQuestion)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Error processing UDP response")
+		log.Error("Error processing response")
+		log.Error(err)
 		return false
 	}
 
@@ -120,8 +127,8 @@ func performTask(url string, port string, message string) bool {
 
 	correctResponseAnswer, err := readUDPResp(conn)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Error reading UDP response")
+		log.Error("Error reading UDP response")
+		log.Error(err)
 		return false
 	}
 
@@ -139,7 +146,7 @@ func performTask(url string, port string, message string) bool {
 	for _, message := range returnMessages {
 		largeString += message
 	}
-	fmt.Println(largeString)
+	log.Info(largeString)
 
 	defer conn.Close()
 	return true
