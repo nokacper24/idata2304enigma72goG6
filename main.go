@@ -48,6 +48,9 @@ func main() {
 	var successfullConnections int
 	var failedConnections int
 
+	// log time taken to perform tasks
+	start := time.Now()
+
 	for i := 0; i <= numberOfWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -68,6 +71,8 @@ func main() {
 
 	}
 	wg.Wait()
+	elapsed := time.Since(start)
+	fmt.Println("Time taken to perform tasks: " + elapsed.String())
 	fmt.Println("Number of successful connections: ", successfullConnections)
 	fmt.Println("Number of failed connections: ", failedConnections)
 
