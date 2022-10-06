@@ -1,4 +1,4 @@
-#task{
+#taskDisplayer{
     background-color: #f5f5f5;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -6,7 +6,29 @@
     margin-bottom: 10px;
 }
 
-#task p {
+#taskDisplayer p {
 
     background-color: #fff;
+}
+
+#taskSelector {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#taskFetcherBtn {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+#taskFetcherBtn:hover {
+    background-color: #ccc;
+    /*add hover to pointer */
+    cursor: pointer;
 }
