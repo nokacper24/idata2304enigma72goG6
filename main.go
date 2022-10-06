@@ -76,25 +76,24 @@ func main() {
 		}
 	})
 	
-	router.Run(webURL + ":" + webPort)
-
+	
 	//print env variables
 	fmt.Println("URL: " + url)
 	fmt.Println("PORT: " + port)
 	fmt.Println("MESSAGE: " + message)
 	fmt.Println("TASKS: " + strconv.Itoa(tasks))
-
-
+	
+	
 	numberOfWorkers := tasks
-
+	
 	var wg sync.WaitGroup
-
+	
 	var successfullConnections int
 	var failedConnections int
-
+	
 	// log time taken to perform tasks
 	start := time.Now()
-
+	
 	for i := 0; i <= numberOfWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -104,28 +103,29 @@ func main() {
 				fmt.Println("\033[41m" + "Error performing task" + "\033[0m")
 				failedConnections++
 				wg.Done()
-
+				
 			}
 			if shouldReturn {
 				successfullConnections++
 				log.Info(returnString)
 				wg.Done()
 			}
-
-		}()
-
+			
+			}()
+			
+		}
+		wg.Wait()
+		elapsed := time.Since(start)
+		fmt.Println("Time taken to perform tasks: " + elapsed.String())
+		fmt.Println("Number of successful connections: ", successfullConnections)
+		fmt.Println("Number of failed connections: ", failedConnections)
+		
+		router.Run(webURL + ":" + webPort)
 	}
-	wg.Wait()
-	elapsed := time.Since(start)
-	fmt.Println("Time taken to perform tasks: " + elapsed.String())
-	fmt.Println("Number of successful connections: ", successfullConnections)
-	fmt.Println("Number of failed connections: ", failedConnections)
-
-}
-
-// performs the task of sending a UDP request to the server, reading the response and sending the correct response back to the server.
-//
-// @param string - the url of the server
+	
+	// performs the task of sending a UDP request to the server, reading the response and sending the correct response back to the server.
+	//
+	// @param string - the url of the server
 //
 // @param string - the port of the server
 //
