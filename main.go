@@ -14,7 +14,11 @@ import (
 
 	//import a logging package
 	"socketProgrammingUDP/logger"
+
+	//import library to make a web gui for the server
+	"github.com/gin-gonic/gin"
 )
+
 
 var log = logger.NewLogger()
 
@@ -39,6 +43,41 @@ func main() {
 		panic(err)
 	}
 
+	webURL := os.Getenv("WEB_URL")
+	webPort := os.Getenv("WEB_PORT")
+
+	// create a new router
+	router := gin.Default()
+
+	// create a new group of routes
+	frontend := router.Group("/")
+
+	// create a route to serve the index.html file
+	frontend.StaticFile("/", "./assets/index.html")
+
+	// create a route to serve the javascript file
+	frontend.StaticFile("/script.js", "./assets/script.js")
+
+	// create a route to serve the css file
+	frontend.StaticFile("/style.css", "./assets/style.css")
+
+
+	
+	frontend.GET("/tasks", func(c *gin.Context) {
+		msg,tsk := performTask(url, port, message)
+		if tsk {
+		c.JSON(200, gin.H{
+			"tasks": msg,
+		})
+		}else{
+			c.JSON(500, gin.H{
+				"tasks": msg,
+			})
+		}
+	})
+	
+	router.Run(webURL + ":" + webPort)
+
 	//print env variables
 	fmt.Println("URL: " + url)
 	fmt.Println("PORT: " + port)
@@ -59,7 +98,7 @@ func main() {
 	for i := 0; i <= numberOfWorkers; i++ {
 		wg.Add(1)
 		go func() {
-			shouldReturn := performTask(url, port, message)
+			returnString, shouldReturn := performTask(url, port, message)
 			if !shouldReturn {
 				// if the task fails, print the error with red bg and return
 				fmt.Println("\033[41m" + "Error performing task" + "\033[0m")
@@ -69,6 +108,7 @@ func main() {
 			}
 			if shouldReturn {
 				successfullConnections++
+				log.Info(returnString)
 				wg.Done()
 			}
 
@@ -92,25 +132,24 @@ func main() {
 // @param string - the message to send to the server
 //
 // @return bool - true if the task was performed successfully, false if not
-func performTask(url string, port string, message string) bool {
+func performTask(url string, port string, message string) ([]string,bool) {
 	// store the return messages so they can be printed at the end
 	var returnMessages []string
 	conn, err := sendUDPReq(url, port, message)
 	if err != nil {
 		log.Error("Error sending UDP request")
 		log.Error(err)
-		return false
+		return returnMessages,false
 	}
 	initialQuestion, err := readUDPResp(conn)
 	if err != nil {
 		log.Error("Error reading UDP response")
 		log.Error(err)
-		return false
+		return returnMessages,false
 	}
 
 	// print a string of ---- to separate the initial question from the response
-	returnMessages = append(returnMessages, "--------------------------------------------------\n")
-	returnMessages = append(returnMessages, initialQuestion+"\n")
+	returnMessages = append(returnMessages, initialQuestion)
 
 	
 
@@ -118,10 +157,10 @@ func performTask(url string, port string, message string) bool {
 	if err != nil {
 		log.Error("Error processing response")
 		log.Error(err)
-		return false
+		return returnMessages,false
 	}
 
-	returnMessages = append(returnMessages, questionAnswer+"\n")
+	returnMessages = append(returnMessages, questionAnswer)
 
 	conn.Write([]byte(questionAnswer))
 
@@ -129,27 +168,22 @@ func performTask(url string, port string, message string) bool {
 	if err != nil {
 		log.Error("Error reading UDP response")
 		log.Error(err)
-		return false
+		return returnMessages,false
 	}
 
 	if correctResponseAnswer == "ok" {
-		//print the response from the server with green background
-		returnMessages = append(returnMessages, "\033[42m"+correctResponseAnswer+"\033[0m"+"\n")
+		//print the response from the server 
+		returnMessages = append(returnMessages, correctResponseAnswer)
 	} else {
-		//print the response from the server with red background
-		returnMessages = append(returnMessages, "\033[41m"+correctResponseAnswer+"\033[0m"+"\n")
+		//print the response from the server 
+		returnMessages = append(returnMessages, correctResponseAnswer)
 	}
 
 	// prepare the return messages to be printed in a chunk so they are not incorrectly ordered
 
-	largeString := ""
-	for _, message := range returnMessages {
-		largeString += message
-	}
-	log.Info(largeString)
 
 	defer conn.Close()
-	return true
+	return returnMessages,true
 }
 
 // Creates a UDP connection to the server and sends the initial connection message
